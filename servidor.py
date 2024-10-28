@@ -58,42 +58,35 @@ def gerar_senhas_aleatorias():
                 senha = gera_sha256(senha + hash_salt)[:6]
             with open("senhas_servidor.txt", "a") as senha_file:
                 senha_file.write(f"Senha {i+1}: {senha}\n")
-        print('\n')
-
-
-
-def contagem_regressiva():
-    now = datetime.now()
-    segundos_ate_proximo_minuto = 60 - now.second
-    while segundos_ate_proximo_minuto:
-        mins, secs = divmod(segundos_ate_proximo_minuto, 60)
-        timer = '{:02d}:{:02d}'.format(mins, secs)
-        time.sleep(1)
-        segundos_ate_proximo_minuto -= 1
-    print('Tempo esgotado!')
-    print('\n')
 
 
 def valida_senha():
+    min_antes = datetime.now().minute
     senha_inserida = input("Digite a senha: ")
-    with open("senhas_servidor.txt", "r") as file:
-        senhas = file.readlines()
-        for linha in senhas:
-            senha_armazenada = linha.split(": ")[1].strip()
-            if senha_inserida == senha_armazenada:
-                print("Senha válida!")
-                with open("senhas_servidor.txt", "w") as file:
-                    for linha in senhas:
-                        senha_armazenada = linha.split(": ")[1].strip()
-                        if senha_inserida == senha_armazenada:
-                            break
-                        file.write(linha)
-                return
-    print("Senha inválida!")
+    if(min_antes == datetime.now().minute):
+        with open("senhas_servidor.txt", "r") as file:
+            senhas = file.readlines()
+            for linha in senhas:
+                senha_armazenada = linha.split(": ")[1].strip()
+                if senha_inserida == senha_armazenada:
+                    print("Senha válida!")
+                    with open("senhas_servidor.txt", "w") as file:
+                        for linha in senhas:
+                            senha_armazenada = linha.split(": ")[1].strip()
+                            if senha_inserida == senha_armazenada:
+                                break
+                            file.write(linha)
+                    return
+                
+        print("Senha inválida!")
+    if(min_antes != datetime.now().minute):
+        print("Tempo esgotado, novas senhas foram geradas")
+        gerar_senhas_aleatorias()
 
 if(verifica_cadastro() == False):
     cadastro_usuario()
 if(verifica_senha_semente() == False):
     registra_senha_semente()
 gerar_senhas_aleatorias()
-valida_senha()
+while True:
+    valida_senha()
