@@ -1,6 +1,7 @@
 import hashlib
 import os
 from datetime import datetime
+import time
 
 def gera_sha256(senha):
     sha_signature = hashlib.sha256(senha.encode()).hexdigest()
@@ -68,7 +69,21 @@ def gerar_senhas_aleatorias():
             else:
                 senha = gera_sha256(senha + hash_salt)[:6]
             print(f"Senha {i+1}: {senha}")
-        print(minuto)
+        print('\n')
+        contagem_regressiva()
+
+def contagem_regressiva():
+    now = datetime.now()
+    segundos_ate_proximo_minuto = 60 - now.second
+    while segundos_ate_proximo_minuto:
+        mins, secs = divmod(segundos_ate_proximo_minuto, 60)
+        timer = '{:02d}:{:02d}'.format(mins, secs)
+        print(timer, end="\r")
+        time.sleep(1)
+        segundos_ate_proximo_minuto -= 1
+    print('Tempo esgotado!')
+    print('\n')
+    gerar_senhas_aleatorias()
 
 if(verifica_cadastro() == False):
     cadastro_usuario()

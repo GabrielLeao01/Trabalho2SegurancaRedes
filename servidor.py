@@ -1,6 +1,7 @@
 import hashlib
 import os
 from datetime import datetime
+import time
 
 def gera_sha256(senha):
     sha_signature = hashlib.sha256(senha.encode()).hexdigest()
@@ -23,28 +24,6 @@ def cadastro_usuario():
         file.write(f"Login: {login}\n")
     print("Usuário cadastrado com sucesso")
 
-def registra_senha_semente():
-    print("Digite a senha semente")
-    senha = input("senha:")
-    senha = gera_sha256(senha)
-    with open("senha_semente.txt", "a") as file:
-        file.write(f"Senha semente: {senha}\n")
-    print("Senha semente registrada com sucesso")
-    
-def gerar_senhas_aleatorias():
-    with open("senha_semente.txt", "r") as file:
-        data = file.read()
-        senha_semente = data.split(": ")[1].strip()
-        if data:
-            for i in range(5):
-                minuto = datetime.now().minute
-                senha = gera_sha256(str(i))
-                print(f"Senha {i}: {senha}")
-        else:
-            print("Senha semente não registrada")
-            registra_senha_semente()
-            gerar_senhas_aleatorias()
-
 def verifica_senha_semente():
     if not os.path.exists("senha_semente.txt"):
         return False
@@ -55,11 +34,66 @@ def verifica_senha_semente():
         else:
             return False
 
+def registra_senha_semente():
+    print("Digite a senha semente")
+    senha = input("senha:")
+    senha = gera_sha256(senha)
+    with open("senha_semente.txt", "a") as file:
+        file.write(f"Senha semente: {senha}\n")
+    print("Senha semente registrada com sucesso")   
+
+
+def gerar_senhas_aleatorias():
+    if os.path.exists("senhas_servidor.txt"):
+        os.remove("senhas_servidor.txt")
+    with open("senha_semente.txt", "r") as file:
+        data = file.read()
+        senha_semente = data.split(": ")[1].strip()
+        for i in range(5):
+            minuto = datetime.now().minute
+            hash_salt = gera_sha256(str(minuto))
+            if i == 0:
+                senha = gera_sha256(senha_semente + hash_salt)[:6]
+            else:
+                senha = gera_sha256(senha + hash_salt)[:6]
+            with open("senhas_servidor.txt", "a") as senha_file:
+                senha_file.write(f"Senha {i+1}: {senha}\n")
+        print('\n')
+
+
+
+def contagem_regressiva():
+    now = datetime.now()
+    segundos_ate_proximo_minuto = 60 - now.second
+    while segundos_ate_proximo_minuto:
+        mins, secs = divmod(segundos_ate_proximo_minuto, 60)
+        timer = '{:02d}:{:02d}'.format(mins, secs)
+        time.sleep(1)
+        segundos_ate_proximo_minuto -= 1
+    print('Tempo esgotado!')
+    print('\n')
+
+
+def valida_senha():
+    senha_inserida = input("Digite a senha: ")
+    with open("senhas_servidor.txt", "r") as file:
+        senhas = file.readlines()
+        for linha in senhas:
+            senha_armazenada = linha.split(": ")[1].strip()
+            if senha_inserida == senha_armazenada:
+                print("Senha válida!")
+                with open("senhas_servidor.txt", "w") as file:
+                    for linha in senhas:
+                        senha_armazenada = linha.split(": ")[1].strip()
+                        if senha_inserida == senha_armazenada:
+                            break
+                        file.write(linha)
+                return
+    print("Senha inválida!")
+
 if(verifica_cadastro() == False):
     cadastro_usuario()
 if(verifica_senha_semente() == False):
     registra_senha_semente()
-
-registra_senha_semente()
 gerar_senhas_aleatorias()
-
+valida_senha()
